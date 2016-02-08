@@ -11,12 +11,8 @@ import org.joda.time.LocalTime;
 @Named
 public class TimeTriggerParser implements ITriggerParser<TimeTrigger> {
 
-    private final DateProvider dateProvider;
-
     @Inject
-    public TimeTriggerParser(final DateProvider dateProvider) {
-        this.dateProvider = dateProvider;
-    }
+    private DateProvider dateProvider;
 
     @Override
     public List<TimeTrigger> parse(final List<String> triggers) {

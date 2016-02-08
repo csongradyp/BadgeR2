@@ -1,16 +1,11 @@
 package net.csongradyp.badger.event.message;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 import net.csongradyp.badger.event.AchievementEventType;
 import net.csongradyp.badger.event.IAchievementUnlockedEvent;
 
 public class AchievementUnlockedEvent implements IAchievementUnlockedEvent {
 
-    private String userId;
     private final String id;
     private final String title;
     private final String text;

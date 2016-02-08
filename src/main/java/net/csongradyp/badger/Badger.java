@@ -16,14 +16,12 @@ import net.csongradyp.badger.event.wrapper.ScoreUpdateHandlerWrapper;
 import net.csongradyp.badger.parser.json.AchievementJsonParser;
 import net.csongradyp.badger.repository.BadgerRepository;
 import net.csongradyp.badger.repository.Repository;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.test.SpringApplicationConfiguration;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.EnableLoadTimeWeaving;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-@SpringApplicationConfiguration
-@EnableLoadTimeWeaving
 public class Badger {
+
+    private static final String CONTEXT_XML_PATH = "META-INF/beans.xml";
 
     private final AchievementJsonParser parser;
     private final AchievementController controller;
@@ -34,7 +32,9 @@ public class Badger {
      * Default constructor to set up Spring environment.
      */
     private Badger() {
-        ApplicationContext applicationContext = SpringApplication.run(Badger.class);
+//        ApplicationContext applicationContext = SpringApplication.run(Badger.class);
+        final ConfigurableApplicationContext applicationContext = new ClassPathXmlApplicationContext(CONTEXT_XML_PATH);
+        applicationContext.registerShutdownHook();
         parser = applicationContext.getBean(AchievementJsonParser.class);
         controller = applicationContext.getBean(AchievementController.class);
         eventBus = applicationContext.getBean(EventBus.class);

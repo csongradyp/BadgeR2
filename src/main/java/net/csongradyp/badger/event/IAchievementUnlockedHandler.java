@@ -12,5 +12,5 @@ public interface IAchievementUnlockedHandler {
      *
      * @param achievementUnlockedEvent Unlocked achievement information as an {@link AchievementUnlockedEvent} instance.
      */
-    void onUnlocked(AchievementUnlockedEvent achievementUnlockedEvent);
+    void onUnlocked(IAchievementUnlockedEvent achievementUnlockedEvent);
 }

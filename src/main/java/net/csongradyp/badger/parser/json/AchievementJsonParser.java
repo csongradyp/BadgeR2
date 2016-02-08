@@ -6,13 +6,10 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
-import javax.annotation.Resource;
 import javax.inject.Inject;
 import javax.inject.Named;
 import net.csongradyp.badger.AchievementDefinition;
-import net.csongradyp.badger.provider.date.DateProvider;
 import net.csongradyp.badger.domain.AchievementType;
 import net.csongradyp.badger.domain.IAchievementBean;
 import net.csongradyp.badger.domain.ITriggerableAchievementBean;
@@ -36,6 +33,8 @@ import net.csongradyp.badger.parser.json.domain.IAchievementJson;
 import net.csongradyp.badger.parser.json.domain.ISimpleTriggerAchievementJson;
 import net.csongradyp.badger.parser.json.domain.RangeTrigger;
 import net.csongradyp.badger.parser.trigger.ITriggerParser;
+import net.csongradyp.badger.parser.trigger.TriggerParser;
+import net.csongradyp.badger.provider.date.DateProvider;
 import org.codehaus.jackson.map.ObjectMapper;
 
 @Named
@@ -44,8 +43,8 @@ public class AchievementJsonParser {
     public static final String FILE_ERROR = "Achievement JSon file read error.";
     @Inject
     private DateProvider dateProvider;
-    @Resource(name = "jsonTriggerParsers")
-    private Map<AchievementType, ITriggerParser> jsonTriggerParsers;
+    @Inject
+    private TriggerParser triggerParsers;
     private final ObjectMapper mapper;
     @Inject
     private RelationParser relationParser;
@@ -123,16 +122,13 @@ public class AchievementJsonParser {
 
             final List<ITrigger> triggers = new ArrayList<>();
             if(json.getScoreTrigger() != null) {
-                final ITriggerParser<ITrigger> triggerParser = jsonTriggerParsers.get(AchievementType.SCORE);
-                triggers.addAll(triggerParser.parse(json.getScoreTrigger()));
+                triggers.addAll(triggerParsers.score().parse(json.getScoreTrigger()));
             }
             if(json.getDateTrigger() != null) {
-                final ITriggerParser<ITrigger> triggerParser = jsonTriggerParsers.get(AchievementType.DATE);
-                triggers.addAll(triggerParser.parse(json.getDateTrigger()));
+                triggers.addAll(triggerParsers.date().parse(json.getDateTrigger()));
             }
             if(json.getTimeTrigger() != null) {
-                final ITriggerParser<ITrigger> triggerParser = jsonTriggerParsers.get(AchievementType.TIME);
-                triggers.addAll(triggerParser.parse(json.getTimeTrigger()));
+                triggers.addAll(triggerParsers.time().parse(json.getTimeTrigger()));
             }
             if(json.getScoreRangeTrigger() != null) {
                 triggers.addAll(getScoreTriggerPairs(json.getScoreRangeTrigger()));
@@ -166,7 +162,7 @@ public class AchievementJsonParser {
         return achievementJsons.parallelStream().map(json -> {
             final ITriggerableAchievementBean bean = (ITriggerableAchievementBean) AchievementFactory.create(type);
             mapBasicAttributes(json, bean);
-            final ITriggerParser<ITrigger> triggerParser = jsonTriggerParsers.get(type);
+            final ITriggerParser<ITrigger> triggerParser = triggerParsers.get(type);
             bean.setTrigger(triggerParser.parse(json.getTrigger()));
             return bean;
         }).collect(Collectors.toList());
@@ -206,8 +202,8 @@ public class AchievementJsonParser {
         bean.setSubscription(json.getSubscription());
     }
 
-    void setJsonTriggerParsers(final Map<AchievementType, ITriggerParser> jsonTriggerParsers) {
-        this.jsonTriggerParsers = jsonTriggerParsers;
+    void setTriggerParsers(final TriggerParser triggerParsers) {
+        this.triggerParsers = triggerParsers;
     }
 
     void setDateProvider(final DateProvider dateProvider) {

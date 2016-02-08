@@ -11,12 +11,8 @@ import net.csongradyp.badger.provider.date.DateProvider;
 @Named
 public class DateTriggerParser implements ITriggerParser<DateTrigger> {
 
-    private final DateProvider dateProvider;
-
     @Inject
-    public DateTriggerParser(final DateProvider dateProvider) {
-        this.dateProvider = dateProvider;
-    }
+    private DateProvider dateProvider;
 
     @Override
     public List<DateTrigger> parse(final List<String> triggers) {
