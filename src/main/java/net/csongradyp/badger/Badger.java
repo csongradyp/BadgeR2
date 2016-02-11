@@ -4,41 +4,27 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Set;
 import net.csongradyp.badger.domain.achievement.IAchievement;
-import net.csongradyp.badger.event.EventBus;
 import net.csongradyp.badger.event.IAchievementUnlockedHandler;
 import net.csongradyp.badger.event.IScoreUpdateHandler;
 import net.csongradyp.badger.event.wrapper.AchievementUnlockedHandlerWrapper;
 import net.csongradyp.badger.event.wrapper.ScoreUpdateHandlerWrapper;
 import net.csongradyp.badger.parser.json.AchievementJsonParser;
 import net.csongradyp.badger.repository.BadgerRepository;
-import net.csongradyp.badger.repository.Repository;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class Badger {
 
-    private static final String CONTEXT_XML_PATH = "META-INF/beans.xml";
-
     private final AchievementJsonParser parser;
     private final AchievementController controller;
-    private final EventBus eventBus;
-    private final Repository repository;
 
     /**
      * Default constructor to set up Spring environment.
      */
     private Badger() {
-//        ApplicationContext applicationContext = SpringApplication.run(Badger.class);
-        final ConfigurableApplicationContext applicationContext = new ClassPathXmlApplicationContext(CONTEXT_XML_PATH);
-        applicationContext.registerShutdownHook();
-        parser = applicationContext.getBean(AchievementJsonParser.class);
-        controller = applicationContext.getBean(AchievementController.class);
-        eventBus = applicationContext.getBean(EventBus.class);
-        repository = applicationContext.getBean(Repository.class);
+        parser = new AchievementJsonParser();
+        controller = new AchievementController();
     }
 
     /**
@@ -49,8 +35,7 @@ public class Badger {
     public Badger(final File definitionFile, final BadgerRepository badgerRepository) {
         this();
         controller.setAchievementDefinition(parser.parse(definitionFile));
-        repository.setAchievementRepository(badgerRepository);
-        repository.setEventRepository(badgerRepository);
+        controller.setRepository(badgerRepository);
     }
 
     /**
@@ -111,7 +96,7 @@ public class Badger {
         return controller.getAllByEvents();
     }
 
-    public Optional<IAchievement> getAchievement(final String id) {
+    public IAchievement getAchievement(final String id) {
         return controller.get(id);
     }
 
@@ -168,7 +153,7 @@ public class Badger {
      * @param achievementUnlockedHandler {@link IAchievementUnlockedHandler} implementation to be register.
      */
     public void subscribeOnUnlock(final IAchievementUnlockedHandler achievementUnlockedHandler) {
-        eventBus.subscribeOnUnlock(new AchievementUnlockedHandlerWrapper(achievementUnlockedHandler));
+        controller.getEventBus().subscribeOnUnlock(new AchievementUnlockedHandlerWrapper(achievementUnlockedHandler));
     }
 
     /**
@@ -177,7 +162,7 @@ public class Badger {
      * @param achievementUnlockedHandler previously registered {@link IAchievementUnlockedHandler} implementation.
      */
     public void unSubscribeOnUnlock(final IAchievementUnlockedHandler achievementUnlockedHandler) {
-        eventBus.unSubscribeOnUnlock(achievementUnlockedHandler);
+        controller.getEventBus().unSubscribeOnUnlock(achievementUnlockedHandler);
     }
 
     /**
@@ -186,7 +171,7 @@ public class Badger {
      * @param achievementUpdateHandler {@link IScoreUpdateHandler} implementation to be register.
      */
     public void subscribeOnScoreChanged(final IScoreUpdateHandler achievementUpdateHandler) {
-        eventBus.subscribeOnScoreChanged(new ScoreUpdateHandlerWrapper(achievementUpdateHandler));
+        controller.getEventBus().subscribeOnScoreChanged(new ScoreUpdateHandlerWrapper(achievementUpdateHandler));
     }
 
     /**
@@ -195,7 +180,7 @@ public class Badger {
      * @param achievementUpdateHandler previously registered {@link IScoreUpdateHandler} implementation.
      */
     public void unSubscribeOnScoreChanged(final IScoreUpdateHandler achievementUpdateHandler) {
-        eventBus.unSubscribeOnScoreChanged(achievementUpdateHandler);
+        controller.getEventBus().unSubscribeOnScoreChanged(achievementUpdateHandler);
     }
 
     /**

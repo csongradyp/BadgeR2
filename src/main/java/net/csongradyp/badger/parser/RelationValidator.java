@@ -1,11 +1,9 @@
 package net.csongradyp.badger.parser;
 
 
-import javax.inject.Named;
 import net.csongradyp.badger.exception.MalformedAchievementRelationDefinition;
 import org.springframework.util.StringUtils;
 
-@Named
 public class RelationValidator {
 
     private static final String SYNTACTICS_REGEX = "^(?:(?![&|]).)(\\(*\\w*[&|]+\\w*\\)*)*(?:(?![&|]).)$";

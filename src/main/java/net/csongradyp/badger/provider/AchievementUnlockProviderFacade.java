@@ -5,59 +5,45 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Named;
 import net.csongradyp.badger.AchievementDefinition;
 import net.csongradyp.badger.domain.AchievementType;
-import net.csongradyp.badger.domain.achievement.DateAchievementBean;
 import net.csongradyp.badger.domain.achievement.IAchievement;
-import net.csongradyp.badger.domain.achievement.ScoreAchievementBean;
-import net.csongradyp.badger.domain.achievement.ScoreRangeAchievementBean;
-import net.csongradyp.badger.domain.achievement.TimeAchievementBean;
-import net.csongradyp.badger.domain.achievement.TimeRangeAchievementBean;
 import net.csongradyp.badger.event.IAchievementUnlockedEvent;
+import net.csongradyp.badger.event.message.AchievementUnlockedEvent;
 import net.csongradyp.badger.provider.unlock.CompositeUnlockedProvider;
+import net.csongradyp.badger.provider.unlock.DateUnlockedProvider;
+import net.csongradyp.badger.provider.unlock.ScoreRangeUnlockedProvider;
+import net.csongradyp.badger.provider.unlock.ScoreUnlockedProvider;
+import net.csongradyp.badger.provider.unlock.TimeRangeUnlockedProvider;
+import net.csongradyp.badger.provider.unlock.TimeUnlockedProvider;
 import net.csongradyp.badger.repository.Repository;
 
-@Named
 public class AchievementUnlockProviderFacade {
 
-    @Inject
-    private Repository repository;
-    @Inject
-    private CompositeUnlockedProvider compositeUnlockedProvider;
-    @Inject
-    private IUnlockedProvider<DateAchievementBean> dateUnlockedProvider;
-    @Inject
-    private IUnlockedProvider<ScoreAchievementBean> scoreUnlockedProvider;
-    @Inject
-    private IUnlockedProvider<ScoreRangeAchievementBean> scoreRangeUnlockedProvider;
-    @Inject
-    private IUnlockedProvider<TimeAchievementBean> timeUnlockedProvider;
-    @Inject
-    private IUnlockedProvider<TimeRangeAchievementBean> timeRangeUnlockedProvider;
+    private final Repository repository;
     private Map<AchievementType, IUnlockedProvider<? extends IAchievement>> unlockedProviders;
     private AchievementDefinition achievementDefinition;
 
-    public AchievementUnlockProviderFacade() {
+    public AchievementUnlockProviderFacade(final Repository repository) {
+        this.repository = repository;
         unlockedProviders = new HashMap<>();
-        unlockedProviders.put(AchievementType.COMPOSITE, compositeUnlockedProvider);
-        unlockedProviders.put(AchievementType.DATE, dateUnlockedProvider);
-        unlockedProviders.put(AchievementType.TIME, timeUnlockedProvider);
-        unlockedProviders.put(AchievementType.TIME_RANGE, timeRangeUnlockedProvider);
-        unlockedProviders.put(AchievementType.SCORE, scoreUnlockedProvider);
-        unlockedProviders.put(AchievementType.SCORE_RANGE, scoreRangeUnlockedProvider);
+        unlockedProviders.put(AchievementType.COMPOSITE, new CompositeUnlockedProvider(this.repository));
+        unlockedProviders.put(AchievementType.DATE, new DateUnlockedProvider(this.repository));
+        unlockedProviders.put(AchievementType.TIME, new TimeUnlockedProvider(this.repository));
+        unlockedProviders.put(AchievementType.TIME_RANGE, new TimeRangeUnlockedProvider(this.repository));
+        unlockedProviders.put(AchievementType.SCORE, new ScoreUnlockedProvider(this.repository));
+        unlockedProviders.put(AchievementType.SCORE_RANGE, new ScoreRangeUnlockedProvider(this.repository));
     }
 
     public Collection<IAchievementUnlockedEvent> findAll(final String userId) {
         final Collection<IAchievementUnlockedEvent> unlockables = new ArrayList<>();
-        achievementDefinition.getAll().stream().forEach(achievementBean -> {
-            final Optional<IAchievementUnlockedEvent> achievement = getUnlockable(userId, achievementBean);
-            if (achievement.isPresent()) {
-                unlockables.add(achievement.get());
+        final Collection<IAchievement> all = achievementDefinition.getAll();
+        for (IAchievement achievementBean : all) {
+            final AchievementUnlockedEvent achievement = getUnlockable(userId, achievementBean);
+            if (achievement != null) {
+                unlockables.add(achievement);
             }
-        });
+        }
         return unlockables;
     }
 
@@ -70,20 +56,20 @@ public class AchievementUnlockProviderFacade {
         final Collection<IAchievementUnlockedEvent> unlockables = new ArrayList<>();
         final Collection<IAchievement> achievementBeans = achievementDefinition.getAchievementsSubscribedFor(event);
         for (IAchievement achievementBean : achievementBeans) {
-            final Optional<IAchievementUnlockedEvent> achievement = getUnlockable(userId, achievementBean, score);
-            if (achievement.isPresent()) {
-                unlockables.add(achievement.get());
+            final AchievementUnlockedEvent achievement = getUnlockable(userId, achievementBean, score);
+            if (achievement != null) {
+                unlockables.add(achievement);
             }
         }
         return unlockables;
     }
 
-    private Optional<IAchievementUnlockedEvent> getUnlockable(final String userId,final IAchievement achievementBean, final Long currentValue) {
+    private AchievementUnlockedEvent getUnlockable(final String userId, final IAchievement achievementBean, final Long currentValue) {
         final IUnlockedProvider<IAchievement> unlockedProvider = (IUnlockedProvider<IAchievement>) unlockedProviders.get(achievementBean.getType());
         return unlockedProvider.getUnlockable(userId, achievementBean, currentValue);
     }
 
-    public Optional<IAchievementUnlockedEvent> getUnlockable(final String userId, final IAchievement achievementBean) {
+    public AchievementUnlockedEvent getUnlockable(final String userId, final IAchievement achievementBean) {
         final Long bestScore = getBestScoreOf(userId, achievementBean.getSubscriptions());
         return getUnlockable(userId, achievementBean, bestScore);
     }
@@ -101,10 +87,6 @@ public class AchievementUnlockProviderFacade {
 
     public void setAchievementDefinition(final AchievementDefinition achievementDefinition) {
         this.achievementDefinition = achievementDefinition;
-    }
-
-    public void setRepository(final Repository repository) {
-        this.repository = repository;
     }
 
 }

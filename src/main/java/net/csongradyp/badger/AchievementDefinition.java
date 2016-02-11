@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import net.csongradyp.badger.domain.AchievementType;
 import net.csongradyp.badger.domain.achievement.IAchievement;
@@ -27,7 +26,7 @@ public class AchievementDefinition {
 
     private void setUpTypeMap() {
         for (AchievementType type : AchievementType.values()) {
-            achievementTypeMap.put(type, new HashMap<>());
+            achievementTypeMap.put(type, new HashMap<String, IAchievement>());
         }
     }
 
@@ -36,11 +35,15 @@ public class AchievementDefinition {
     }
 
     public void setEvents(final Collection<String> events) {
-        events.stream().forEach(event -> achievementEventMap.put(event, new HashSet<>()));
+        for (String event : events) {
+            achievementEventMap.put(event, new HashSet<IAchievement>());
+        }
     }
 
     public void setAchievements(Collection<IAchievement> achievements) {
-        achievements.stream().forEach(this::add);
+        for (IAchievement achievement : achievements) {
+            add(achievement);
+        }
     }
 
     private void add(final IAchievement achievement) {
@@ -56,19 +59,19 @@ public class AchievementDefinition {
     private void addToEventMap(final IAchievement achievementBean) {
         final List<String> eventSubscriptions = achievementBean.getSubscriptions();
         if (eventSubscriptions != null && !eventSubscriptions.isEmpty()) {
-            eventSubscriptions.forEach(event -> {
-                if(!achievementEventMap.containsKey(event)) {
+            for (String event : eventSubscriptions) {
+                if (!achievementEventMap.containsKey(event)) {
                     throw new MalformedAchievementDefinition("Event declaration is missing for event: " + event);
                 }
                 achievementEventMap.get(event).add(achievementBean);
-            });
+            }
         }
     }
 
     private void addToCategoryMap(final IAchievement achievementBean) {
         final String category = achievementBean.getCategory();
         if (achievementCategoryMap.get(category) == null) {
-            achievementCategoryMap.put(category, new HashSet<>());
+            achievementCategoryMap.put(category, new HashSet<IAchievement>());
         }
         achievementCategoryMap.get(category).add(achievementBean);
     }
@@ -83,7 +86,9 @@ public class AchievementDefinition {
 
     public Collection<IAchievement> getAll() {
         Collection<IAchievement> allAchievements = new HashSet<>();
-        achievementTypeMap.values().forEach(achievementMap -> allAchievements.addAll(achievementMap.values()));
+        for (Map<String, IAchievement> achievementMap : achievementTypeMap.values()) {
+            allAchievements.addAll(achievementMap.values());
+        }
         return allAchievements;
     }
 
@@ -91,17 +96,23 @@ public class AchievementDefinition {
         return achievementEventMap;
     }
 
-    public Optional<IAchievement> get(final AchievementType type, final String id) {
-        Optional<IAchievement> achievement = Optional.empty();
+    public IAchievement get(final AchievementType type, final String id) {
+        IAchievement achievement = null;
         final Map<String, IAchievement> achievementBeanMap = achievementTypeMap.get(type);
         if (achievementBeanMap.containsKey(id)) {
-            achievement = Optional.of(achievementBeanMap.get(id));
+            achievement = achievementBeanMap.get(id);
         }
         return achievement;
     }
 
-    public Optional<IAchievement> get(final String id) {
-        return getAll().stream().filter(achievement -> achievement.getId().equals(id)).findAny();
+    public IAchievement get(final String id) {
+        final Collection<IAchievement> all = getAll();
+        for (IAchievement achievement : all) {
+            if (achievement.getId().equals(id)) {
+                return achievement;
+            }
+        }
+        return null;
     }
 
 }

@@ -3,10 +3,8 @@ package net.csongradyp.badger.parser;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.Stack;
-import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Named;
 import net.csongradyp.badger.domain.AchievementType;
 import net.csongradyp.badger.domain.achievement.relation.IRelation;
 import net.csongradyp.badger.domain.achievement.relation.Relation;
@@ -15,11 +13,13 @@ import net.csongradyp.badger.domain.achievement.relation.RelationOperator;
 import net.csongradyp.badger.domain.achievement.trigger.ITrigger;
 import net.csongradyp.badger.exception.MalformedAchievementRelationDefinition;
 
-@Named
 public class RelationParser {
 
-    @Inject
     private RelationValidator relationValidator;
+
+    public RelationParser() {
+        relationValidator = new RelationValidator();
+    }
 
     public Relation parse(final String relationExpression, final Collection<ITrigger> triggers) {
         if(relationExpression == null) {
@@ -49,8 +49,13 @@ public class RelationParser {
                 Integer nextIndex = getNextElementStartIndex(normalizedRelation);
                 final String achievementTypeString = normalizedRelation.substring(0, nextIndex);
                 final AchievementType achievementType = AchievementType.parse(achievementTypeString);
-                final Collection<ITrigger> typeTriggers = triggers.stream().filter(t -> t.getType() == achievementType).collect(Collectors.toList());
-                if (typeTriggers != null && !typeTriggers.isEmpty()) {
+                final Collection<ITrigger> typeTriggers = new LinkedList<>();
+                for (ITrigger t : triggers) {
+                    if(t.getType() == achievementType) {
+                        typeTriggers.add(t);
+                    }
+                }
+                if (!typeTriggers.isEmpty()) {
                     relationStack.peek().addChild(new RelationElement(typeTriggers));
                 }
                 normalizedRelation = normalizedRelation.substring(nextIndex);

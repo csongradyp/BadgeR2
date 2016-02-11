@@ -1,56 +1,52 @@
 package net.csongradyp.badger.provider.date;
 
 import java.util.Date;
-import javax.inject.Named;
 import org.joda.time.DateTime;
 import org.joda.time.LocalTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
-@Named
-public class DateProvider {
+public final class DateProvider {
 
-    private final DateTimeFormatter dateFormatter;
-    private final DateTimeFormatter timeFormatter;
+    private static final DateTimeFormatter dateFormatter = DateTimeFormat.forPattern("MM-dd");
+    private static final DateTimeFormatter  timeFormatter = DateTimeFormat.forPattern("HH:mm");
 
-    public DateProvider() {
-        dateFormatter = DateTimeFormat.forPattern("MM-dd");
-        timeFormatter = DateTimeFormat.forPattern("HH:mm");
+    private DateProvider() {
     }
 
-    public String currentDateString() {
+    public static String currentDateString() {
         return format(new Date().getTime());
     }
 
-    public Date currentDate() {
+    public static Date currentDate() {
         return new DateTime().toLocalDate().toDate();
     }
 
-    public String currentTimeString() {
+    public static String currentTimeString() {
         return getTime(new Date());
     }
 
-    public Date currentTime() {
+    public static Date currentTime() {
         return new Date();
     }
 
-    public String getDate(final Date date) {
+    public static String getDate(final Date date) {
         return format(date.getTime());
     }
 
-    public Date parseDate(final String date) {
+    public static Date parseDate(final String date) {
         return dateFormatter.parseLocalDate(date).toDate();
     }
 
-    protected String format(final Long time) {
+    protected static String format(final Long time) {
         return dateFormatter.print(time);
     }
 
-    public String getTime(final Date date) {
+    public static String getTime(final Date date) {
         return timeFormatter.print(date.getTime());
     }
 
-    public LocalTime parseTime(final String time) {
+    public static LocalTime parseTime(final String time) {
         return timeFormatter.parseLocalTime(time);
     }
 

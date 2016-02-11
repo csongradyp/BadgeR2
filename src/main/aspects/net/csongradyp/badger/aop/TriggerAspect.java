@@ -2,7 +2,6 @@ package net.csongradyp.badger.aop;
 
 import java.lang.annotation.Annotation;
 import java.util.List;
-import java.util.Optional;
 import javax.inject.Inject;
 import net.csongradyp.badger.AchievementController;
 import net.csongradyp.badger.annotations.EventTrigger;
@@ -27,17 +26,17 @@ public class TriggerAspect extends AchievementAspect {
     public void trigger(final JoinPoint joinPoint, final EventTrigger achievementScore) {
         final List<String> events = collectEvents(joinPoint, achievementScore.events());
         final String owner = getOwners(joinPoint).get(0);
-        final Optional<Long> score = getScore(joinPoint);
+        final Long score = getScore(joinPoint);
         for (String event : events) {
-            if(score.isPresent()) {
-                achievementController.triggerEvent(owner, event, score.get());
+            if (score != null) {
+                achievementController.triggerEvent(owner, event, score);
             } else {
                 achievementController.triggerEvent(owner, event);
             }
         }
     }
 
-    protected Optional<Long> getScore(final JoinPoint joinPoint) {
+    protected Long getScore(final JoinPoint joinPoint) {
         Long score = null;
         final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         final Object[] parameterValues = joinPoint.getArgs();
@@ -56,6 +55,6 @@ public class TriggerAspect extends AchievementAspect {
                 }
             }
         }
-        return Optional.ofNullable(score);
+        return score;
     }
 }

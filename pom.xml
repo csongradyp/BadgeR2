@@ -75,9 +75,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.3</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>1.7</source>
+                    <target>1.7</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -92,9 +93,9 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                    <complianceLevel>1.8</complianceLevel>
+                    <source>1.7</source>
+                    <target>1.7</target>
+                    <complianceLevel>1.7</complianceLevel>
                     <aspectDirectory>src/main/aspects</aspectDirectory>
                     <showWeaveInfo>true</showWeaveInfo>
                     <verbose>false</verbose>

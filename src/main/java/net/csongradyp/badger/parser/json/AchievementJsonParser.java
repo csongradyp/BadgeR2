@@ -5,10 +5,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Named;
 import net.csongradyp.badger.AchievementDefinition;
 import net.csongradyp.badger.domain.AchievementType;
 import net.csongradyp.badger.domain.IAchievementBean;
@@ -37,19 +35,16 @@ import net.csongradyp.badger.parser.trigger.TriggerParser;
 import net.csongradyp.badger.provider.date.DateProvider;
 import org.codehaus.jackson.map.ObjectMapper;
 
-@Named
 public class AchievementJsonParser {
 
     public static final String FILE_ERROR = "Achievement JSon file read error.";
-    @Inject
-    private DateProvider dateProvider;
-    @Inject
     private TriggerParser triggerParsers;
     private final ObjectMapper mapper;
-    @Inject
     private RelationParser relationParser;
 
     public AchievementJsonParser() {
+        triggerParsers = new TriggerParser();
+        relationParser = new RelationParser();
         mapper = new ObjectMapper();
     }
 
@@ -116,101 +111,108 @@ public class AchievementJsonParser {
 
     @SuppressWarnings("unchecked")
     private List<CompositeAchievementBean> mapCompositeAchievementBeans(final List<CompositeAchievementJson> achievements) {
-        return achievements.stream().map(json -> {
+        List<CompositeAchievementBean> collection = new ArrayList<>();
+        for (CompositeAchievementJson json : achievements) {
             final CompositeAchievementBean bean = new CompositeAchievementBean();
             mapBasicAttributes(json, bean);
 
             final List<ITrigger> triggers = new ArrayList<>();
-            if(json.getScoreTrigger() != null) {
+            if (json.getScoreTrigger() != null) {
                 triggers.addAll(triggerParsers.score().parse(json.getScoreTrigger()));
             }
-            if(json.getDateTrigger() != null) {
+            if (json.getDateTrigger() != null) {
                 triggers.addAll(triggerParsers.date().parse(json.getDateTrigger()));
             }
-            if(json.getTimeTrigger() != null) {
+            if (json.getTimeTrigger() != null) {
                 triggers.addAll(triggerParsers.time().parse(json.getTimeTrigger()));
             }
-            if(json.getScoreRangeTrigger() != null) {
+            if (json.getScoreRangeTrigger() != null) {
                 triggers.addAll(getScoreTriggerPairs(json.getScoreRangeTrigger()));
             }
 
-            if(json.getTimeRangeTrigger() != null) {
+            if (json.getTimeRangeTrigger() != null) {
                 triggers.addAll(getTimeTriggerPairs(json.getTimeRangeTrigger()));
             }
 
-            if(json.getRelation() == null) {
+            if (json.getRelation() == null) {
                 throw new MalformedAchievementDefinition("Missing relation definition for: " + json.getId());
             }
             bean.setTrigger(triggers);
             final Relation relation = relationParser.parse(json.getRelation(), triggers);
             bean.setRelation(relation);
-
-            return bean;
-        }).collect(Collectors.toList());
+            collection.add(bean);
+        }
+        return collection;
     }
 
     private List<SingleAchievementBean> mapSingleAchievementBeans(final List<? extends IAchievementJson> achievements) {
-        return achievements.stream().map(json -> {
+        List<SingleAchievementBean> singleAchievements = new LinkedList<>();
+        for (IAchievementJson json : achievements) {
             final SingleAchievementBean bean = new SingleAchievementBean();
             mapBasicAttributes(json, bean);
-            return bean;
-        }).collect(Collectors.toList());
+            singleAchievements.add(bean);
+        }
+        return singleAchievements;
     }
 
     @SuppressWarnings("unchecked")
     private List<IAchievementBean> mapTriggerAchievements(final AchievementType type, final List<? extends ISimpleTriggerAchievementJson> achievementJsons) {
-        return achievementJsons.parallelStream().map(json -> {
+        List<IAchievementBean> triggerAchievements = new LinkedList<>();
+        for (ISimpleTriggerAchievementJson json : achievementJsons) {
             final ITriggerableAchievementBean bean = (ITriggerableAchievementBean) AchievementFactory.create(type);
             mapBasicAttributes(json, bean);
             final ITriggerParser<ITrigger> triggerParser = triggerParsers.get(type);
             bean.setTrigger(triggerParser.parse(json.getTrigger()));
-            return bean;
-        }).collect(Collectors.toList());
+            triggerAchievements.add(bean);
+        }
+        return triggerAchievements;
     }
 
     private Collection<IAchievement> mapScoreRangeAchievements(final List<AchievementJson<RangeTrigger<Long>>> scoreRange) {
-        return scoreRange.parallelStream().map(json -> {
+        Collection<IAchievement> scoreRangeAchievements = new LinkedList<>();
+        for (AchievementJson<RangeTrigger<Long>> json : scoreRange) {
             final ScoreRangeAchievementBean bean = new ScoreRangeAchievementBean();
             mapBasicAttributes(json, bean);
             final List<ScoreTriggerPair> triggers = getScoreTriggerPairs(json.getTrigger());
             bean.setTrigger(triggers);
-            return bean;
-        }).collect(Collectors.toList());
+            scoreRangeAchievements.add(bean);
+        }
+        return scoreRangeAchievements;
     }
 
     private List<ScoreTriggerPair> getScoreTriggerPairs(List<RangeTrigger<Long>> trigger) {
-        return trigger.stream().map(t -> new ScoreTriggerPair(t.getStart(), t.getEnd())).collect(Collectors.toList());
+        List<ScoreTriggerPair> scoreRangeTriggers = new LinkedList<>();
+        for (RangeTrigger<Long> t : trigger) {
+            final ScoreTriggerPair scoreTriggerPair = new ScoreTriggerPair(t.getStart(), t.getEnd());
+            scoreRangeTriggers.add(scoreTriggerPair);
+        }
+        return scoreRangeTriggers;
     }
 
     private Collection<IAchievement> mapTimeRangeAchievements(final List<AchievementJson<RangeTrigger<String>>> timeRange) {
-        return timeRange.parallelStream().map(json -> {
+        Collection<IAchievement> timeRangeAchievements = new LinkedList<>();
+        for (AchievementJson<RangeTrigger<String>> json : timeRange) {
             final TimeRangeAchievementBean bean = new TimeRangeAchievementBean();
             mapBasicAttributes(json, bean);
             final List<TimeTriggerPair> triggers = getTimeTriggerPairs(json.getTrigger());
             bean.setTrigger(triggers);
-            return bean;
-        }).collect(Collectors.toList());
+            timeRangeAchievements.add(bean);
+        }
+        return timeRangeAchievements;
     }
 
     private List<TimeTriggerPair> getTimeTriggerPairs(List<RangeTrigger<String>> trigger) {
-        return trigger.stream().map(t -> new TimeTriggerPair(dateProvider.parseTime(t.getStart()), dateProvider.parseTime(t.getEnd()))).collect(Collectors.toList());
+        List<TimeTriggerPair> timeTriggers = new LinkedList<>();
+        for (RangeTrigger<String> t : trigger) {
+            final TimeTriggerPair timeTriggerPair = new TimeTriggerPair(DateProvider.parseTime(t.getStart()), DateProvider.parseTime(t.getEnd()));
+            timeTriggers.add(timeTriggerPair);
+        }
+        return timeTriggers;
     }
 
     private void mapBasicAttributes(final IAchievementJson json, final IAchievementBean bean) {
         bean.setId(json.getId());
         bean.setCategory(json.getCategory());
         bean.setSubscription(json.getSubscription());
-    }
-
-    void setTriggerParsers(final TriggerParser triggerParsers) {
-        this.triggerParsers = triggerParsers;
-    }
-
-    void setDateProvider(final DateProvider dateProvider) {
-        this.dateProvider = dateProvider;
-    }
-
-    void setRelationParser(RelationParser relationParser) {
-        this.relationParser = relationParser;
     }
 }

@@ -33,7 +33,7 @@ public class CompositeAchievementBean extends AbstractAchievementBean implements
     }
 
     public void addTrigger(final Collection<ITrigger> triggers) {
-        triggers.stream().forEach(this.triggers::add);
+        this.triggers.addAll(triggers);
     }
 
     public void setRelation(final Relation relation) {

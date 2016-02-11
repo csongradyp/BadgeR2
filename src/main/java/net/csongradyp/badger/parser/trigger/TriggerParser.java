@@ -1,18 +1,18 @@
 package net.csongradyp.badger.parser.trigger;
 
-import javax.inject.Inject;
-import javax.inject.Named;
 import net.csongradyp.badger.domain.AchievementType;
 
-@Named
 public class TriggerParser {
 
-    @Inject
     private DateTriggerParser dateTriggerParser;
-    @Inject
     private TimeTriggerParser timeTriggerParser;
-    @Inject
     private ScoreTriggerParser scoreTriggerParser;
+
+    public TriggerParser() {
+        dateTriggerParser = new DateTriggerParser();
+        timeTriggerParser = new TimeTriggerParser();
+        scoreTriggerParser = new ScoreTriggerParser();
+    }
 
     public ScoreTriggerParser score() {
         return scoreTriggerParser;

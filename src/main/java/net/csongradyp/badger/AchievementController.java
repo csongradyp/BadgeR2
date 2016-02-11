@@ -4,11 +4,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Named;
 import net.csongradyp.badger.domain.IAchievementBean;
 import net.csongradyp.badger.domain.achievement.IAchievement;
 import net.csongradyp.badger.event.EventBus;
@@ -17,22 +14,18 @@ import net.csongradyp.badger.event.message.AchievementUnlockedEvent;
 import net.csongradyp.badger.event.message.ScoreUpdatedEvent;
 import net.csongradyp.badger.factory.UnlockedEventFactory;
 import net.csongradyp.badger.provider.AchievementUnlockProviderFacade;
+import net.csongradyp.badger.repository.BadgerRepository;
 import net.csongradyp.badger.repository.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Named
 public class AchievementController {
 
     private static final Logger LOG = LoggerFactory.getLogger(AchievementController.class);
 
-    @Inject
     private UnlockedEventFactory unlockedEventFactory;
-    @Inject
     private AchievementUnlockProviderFacade achievementUnlockFinder;
-    @Inject
     private EventBus eventBus;
-    @Inject
     private Repository repository;
 
     private AchievementDefinition achievementDefinition;
@@ -40,7 +33,11 @@ public class AchievementController {
     private ResourceBundle resourceBundle;
 
     public AchievementController() {
+        repository = new Repository();
+        eventBus = new EventBus();
         achievementDefinition = new AchievementDefinition();
+        achievementUnlockFinder = new AchievementUnlockProviderFacade(repository);
+        unlockedEventFactory = new UnlockedEventFactory();
     }
 
     public void setAchievementDefinition(final AchievementDefinition achievementDefinition) {
@@ -74,12 +71,12 @@ public class AchievementController {
     public Collection<IAchievement> getAllUnlocked(final String userId) {
         final Collection<IAchievement> unlocked = new ArrayList<>();
         final Collection<IAchievementBean> unlockedEntities = repository.achievement().getAll(userId);
-        unlockedEntities.parallelStream().forEach(entity -> {
-            final Optional<IAchievement> achievement = achievementDefinition.get(entity.getId());
-            if (achievement.isPresent()) {
-                unlocked.add(achievement.get());
+        for (IAchievementBean entity : unlockedEntities) {
+            final IAchievement achievement = achievementDefinition.get(entity.getId());
+            if (achievement != null) {
+                unlocked.add(achievement);
             }
-        });
+        }
         return unlocked;
     }
 
@@ -87,15 +84,15 @@ public class AchievementController {
         final Collection<IAchievement> achievementsByOwner = new ArrayList<>();
         final Collection<IAchievementBean> achievementEntities = repository.achievement().getAll(userId);
         for (IAchievementBean achievementEntity : achievementEntities) {
-            final Optional<IAchievement> achievement = achievementDefinition.get(achievementEntity.getId());
-            if (achievement.isPresent()) {
-                achievementsByOwner.add(achievement.get());
+            final IAchievement achievement = achievementDefinition.get(achievementEntity.getId());
+            if (achievement != null) {
+                achievementsByOwner.add(achievement);
             }
         }
         return achievementsByOwner;
     }
 
-    public Optional<IAchievement> get(final String id) {
+    public IAchievement get(final String id) {
         return achievementDefinition.get(id);
     }
 
@@ -106,7 +103,9 @@ public class AchievementController {
     public void checkAndUnlock(final String userId) {
         LOG.debug("Checking achievements to unlock");
         final Collection<IAchievementUnlockedEvent> unlockableAchievements = achievementUnlockFinder.findAll(userId);
-        unlockableAchievements.forEach(this::unlock);
+        for (IAchievementUnlockedEvent event : unlockableAchievements) {
+            unlock(event);
+        }
     }
 
     public void triggerEventWithHighScore(final String userId, final String event, final Long score) {
@@ -125,7 +124,9 @@ public class AchievementController {
             LOG.debug("Achievement event named {} is triggered by owners {} with score: {}", event, score);
             publishUpdatedScore(userId, event, score);
             final Collection<IAchievementUnlockedEvent> unlockables = achievementUnlockFinder.findUnlockables(userId, event, score);
-            unlockables.forEach(this::unlock);
+            for (IAchievementUnlockedEvent unlockable : unlockables) {
+                unlock(unlockable);
+            }
         }
     }
 
@@ -144,7 +145,9 @@ public class AchievementController {
         LOG.info("Achievement event triggered: {}", event);
         publishIncremented(userId, event);
         final Collection<IAchievementUnlockedEvent> unlockables = achievementUnlockFinder.findUnlockables(userId, event);
-        unlockables.forEach(this::unlock);
+        for (IAchievementUnlockedEvent unlockable : unlockables) {
+            unlock(unlockable);
+        }
     }
 
     private Long publishIncremented(final String userId, final String event) {
@@ -154,9 +157,9 @@ public class AchievementController {
     }
 
     public void unlock(final String userId, final String achievementId, final String triggerValue) {
-        final Optional<IAchievement> matchingAchievement = achievementDefinition.get(achievementId);
-        if (matchingAchievement.isPresent()) {
-            final AchievementUnlockedEvent achievementUnlockedEvent = unlockedEventFactory.createEvent(userId, matchingAchievement.get(), triggerValue);
+        final IAchievement matchingAchievement = achievementDefinition.get(achievementId);
+        if (matchingAchievement != null) {
+            final AchievementUnlockedEvent achievementUnlockedEvent = UnlockedEventFactory.createEvent(userId, matchingAchievement, triggerValue);
             unlock(achievementUnlockedEvent);
         }
     }
@@ -201,7 +204,12 @@ public class AchievementController {
         this.eventBus = eventBus;
     }
 
-    void setRepository(Repository repository) {
-        this.repository = repository;
+    public EventBus getEventBus() {
+        return eventBus;
+    }
+
+    void setRepository(BadgerRepository repository) {
+        this.repository.setAchievementRepository(repository);
+        this.repository.setEventRepository(repository);
     }
 }

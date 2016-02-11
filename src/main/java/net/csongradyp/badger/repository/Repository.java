@@ -1,8 +1,5 @@
 package net.csongradyp.badger.repository;
 
-import javax.inject.Named;
-
-@Named
 public class Repository {
 
     private EventRepository eventRepository;

@@ -2,11 +2,9 @@ package net.csongradyp.badger.parser.trigger;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Named;
 import net.csongradyp.badger.domain.achievement.trigger.ScoreTrigger;
 import net.csongradyp.badger.exception.MalformedAchievementDefinition;
 
-@Named
 public class ScoreTriggerParser implements ITriggerParser<ScoreTrigger> {
 
     private static final String NUMBER_TRIGGER_PATTERN = "(^\\d+$)|(^\\d+(\\+|-)$)";

@@ -1,32 +1,30 @@
 package net.csongradyp.badger.factory;
 
 import java.util.ResourceBundle;
-import javax.inject.Named;
 import net.csongradyp.badger.domain.IAchievementBean;
 import net.csongradyp.badger.domain.achievement.IAchievement;
 import net.csongradyp.badger.event.message.AchievementUnlockedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Named
-public class UnlockedEventFactory {
+public final class UnlockedEventFactory {
 
     private static final Logger LOG = LoggerFactory.getLogger(UnlockedEventFactory.class);
 
-    private ResourceBundle resourceBundle;
+    private static ResourceBundle resourceBundle;
 
-    public AchievementUnlockedEvent createEvent(final String userId, final IAchievementBean achievementBean, final Integer level, final Long triggeredValue) {
+    public static AchievementUnlockedEvent createEvent(final String userId, final IAchievementBean achievementBean, final Integer level, final Long triggeredValue) {
         final AchievementUnlockedEvent achievementUnlockedEvent = createEvent(userId, achievementBean, String.valueOf(triggeredValue));
         achievementUnlockedEvent.setLevel(level);
         LOG.info("Achievement created with id: {} level: {}", achievementBean.getId(), level);
         return achievementUnlockedEvent;
     }
 
-    public AchievementUnlockedEvent createEvent(final String userId, final IAchievement achievementBean) {
+    public static AchievementUnlockedEvent createEvent(final String userId, final IAchievement achievementBean) {
         return createEvent(userId, achievementBean, "");
     }
 
-    public AchievementUnlockedEvent createEvent(final String userId, final IAchievement achievementBean, final String triggeredValue) {
+    public static AchievementUnlockedEvent createEvent(final String userId, final IAchievement achievementBean, final String triggeredValue) {
         final String title;
         final String text;
         if (resourceBundle != null) {
@@ -42,8 +40,8 @@ public class UnlockedEventFactory {
         return unlockedEvent;
     }
 
-    public void setResourceBundle(final ResourceBundle resourceBundle) {
-        this.resourceBundle = resourceBundle;
+    public static void setResourceBundle(final ResourceBundle resourceBundle) {
+        UnlockedEventFactory.resourceBundle = resourceBundle;
     }
 
 }

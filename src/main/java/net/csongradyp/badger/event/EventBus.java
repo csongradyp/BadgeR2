@@ -2,13 +2,10 @@ package net.csongradyp.badger.event;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Optional;
-import javax.inject.Named;
 import net.csongradyp.badger.event.message.ScoreUpdatedEvent;
 import net.csongradyp.badger.event.wrapper.AchievementUnlockedHandlerWrapper;
 import net.csongradyp.badger.event.wrapper.ScoreUpdateHandlerWrapper;
 
-@Named
 public class EventBus {
 
     private final Collection<AchievementUnlockedHandlerWrapper> unlockedSubscribers = new ArrayList<>();
@@ -19,12 +16,10 @@ public class EventBus {
     }
 
     public void unSubscribeOnUnlock(final IAchievementUnlockedHandler handler) {
-        final Optional<AchievementUnlockedHandlerWrapper> registeredHandler = unlockedSubscribers.stream()
-                .filter(wrapper -> wrapper.getWrapped().equals(handler))
-                .findAny();
-        if (registeredHandler.isPresent()) {
-            final AchievementUnlockedHandlerWrapper listener = registeredHandler.get();
-            unSubscribe(listener);
+        for (AchievementUnlockedHandlerWrapper wrapper : unlockedSubscribers) {
+            if( wrapper.getWrapped().equals(handler)) {
+                unSubscribe(wrapper);
+            }
         }
     }
 
@@ -36,7 +31,9 @@ public class EventBus {
     }
 
     public void publishUnlocked(final IAchievementUnlockedEvent achievement) {
-        unlockedSubscribers.stream().forEach(handler -> handler.onUnlocked(achievement));
+        for (AchievementUnlockedHandlerWrapper handler : unlockedSubscribers) {
+            handler.onUnlocked(achievement);
+        }
     }
 
     public void subscribeOnScoreChanged(final ScoreUpdateHandlerWrapper handler) {
@@ -48,12 +45,10 @@ public class EventBus {
     }
 
     public void unSubscribeOnScoreChanged(final IScoreUpdateHandler handler) {
-        final Optional<ScoreUpdateHandlerWrapper> registeredHandler = scoreUpdateSubscribers.stream()
-                .filter(wrapper -> wrapper.getWrapped().equals(handler))
-                .findAny();
-        if (registeredHandler.isPresent()) {
-            final ScoreUpdateHandlerWrapper listener = registeredHandler.get();
-            unSubscribe(listener);
+        for (AchievementUnlockedHandlerWrapper wrapper : unlockedSubscribers) {
+            if(wrapper.getWrapped().equals(handler)) {
+                unSubscribe(wrapper);
+            }
         }
     }
 
@@ -65,7 +60,9 @@ public class EventBus {
     }
 
     public void publishScoreChanged(final ScoreUpdatedEvent scoreUpdatedEvent) {
-        scoreUpdateSubscribers.stream().forEach(handler -> handler.onUpdate(scoreUpdatedEvent));
+        for (ScoreUpdateHandlerWrapper handler : scoreUpdateSubscribers) {
+            handler.onUpdate(scoreUpdatedEvent);
+        }
     }
 
     public Collection<AchievementUnlockedHandlerWrapper> getUnlockedSubscribers() {
