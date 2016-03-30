@@ -2,7 +2,7 @@ package net.csongradyp.badger.repository;
 
 import java.util.Collection;
 import java.util.Date;
-import net.csongradyp.badger.domain.IAchievementBean;
+import net.csongradyp.badger.domain.achievement.IPersistentAchievement;
 
 public interface AchievementRepository {
 
@@ -14,7 +14,7 @@ public interface AchievementRepository {
 
     Long getNumberOfUnlocked();
 
-    Collection<IAchievementBean> getAll(final String userId);
+    Collection<IPersistentAchievement> getAll(final String userId);
 
     /**
      * Is the achievement with the given name unlocked.

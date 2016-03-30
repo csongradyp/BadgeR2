@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
 import net.csongradyp.badger.domain.achievement.IAchievement;
+import net.csongradyp.badger.domain.achievement.UnlockedAchievement;
 import net.csongradyp.badger.event.IAchievementUnlockedHandler;
 import net.csongradyp.badger.event.IScoreUpdateHandler;
 import net.csongradyp.badger.event.wrapper.AchievementUnlockedHandlerWrapper;
@@ -78,13 +79,12 @@ public class Badger {
     }
 
     /**
-     * Returns all defined achievements belong to the given owner.
+     * Returns all unlocked achievements without any sorting.
      *
-     * @param owner Owners of the unlocked achievement.
      * @return {@link Collection} of {@link IAchievement} instances.
      */
-    public Collection<IAchievement> getAchievementsByOwner(final String owner) {
-        return controller.getAllByOwner(owner);
+    public Collection<UnlockedAchievement> getUnlocked(final String owner) {
+        return controller.getAllUnlocked(owner);
     }
 
     /**

@@ -6,8 +6,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
-import net.csongradyp.badger.domain.IAchievementBean;
 import net.csongradyp.badger.domain.achievement.IAchievement;
+import net.csongradyp.badger.domain.achievement.IPersistentAchievement;
+import net.csongradyp.badger.domain.achievement.UnlockedAchievement;
 import net.csongradyp.badger.event.EventBus;
 import net.csongradyp.badger.event.IAchievementUnlockedEvent;
 import net.csongradyp.badger.event.message.AchievementUnlockedEvent;
@@ -53,7 +54,7 @@ public class AchievementController {
 
     public void setResourceBundle(final ResourceBundle resourceBundle) {
         this.resourceBundle = resourceBundle;
-        unlockedEventFactory.setResourceBundle(resourceBundle);
+        UnlockedEventFactory.setResourceBundle(resourceBundle);
     }
 
     public ResourceBundle getResourceBundle() {
@@ -68,28 +69,16 @@ public class AchievementController {
         return achievementDefinition.getAll();
     }
 
-    public Collection<IAchievement> getAllUnlocked(final String userId) {
-        final Collection<IAchievement> unlocked = new ArrayList<>();
-        final Collection<IAchievementBean> unlockedEntities = repository.achievement().getAll(userId);
-        for (IAchievementBean entity : unlockedEntities) {
+    public Collection<UnlockedAchievement> getAllUnlocked(final String userId) {
+        final Collection<UnlockedAchievement> unlocked = new ArrayList<>();
+        final Collection<IPersistentAchievement> unlockedEntities = repository.achievement().getAll(userId);
+        for (IPersistentAchievement entity : unlockedEntities) {
             final IAchievement achievement = achievementDefinition.get(entity.getId());
             if (achievement != null) {
-                unlocked.add(achievement);
+                unlocked.add(new UnlockedAchievement(achievement.getId(), achievement.getCategory(), entity.getLevel(), achievement.getType(), achievement.getTitleKey(), achievement.getTextKey(), entity.getAcquireDate()));
             }
         }
         return unlocked;
-    }
-
-    public Collection<IAchievement> getAllByOwner(final String userId) {
-        final Collection<IAchievement> achievementsByOwner = new ArrayList<>();
-        final Collection<IAchievementBean> achievementEntities = repository.achievement().getAll(userId);
-        for (IAchievementBean achievementEntity : achievementEntities) {
-            final IAchievement achievement = achievementDefinition.get(achievementEntity.getId());
-            if (achievement != null) {
-                achievementsByOwner.add(achievement);
-            }
-        }
-        return achievementsByOwner;
     }
 
     public IAchievement get(final String id) {
